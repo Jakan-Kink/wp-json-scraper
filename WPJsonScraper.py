@@ -20,8 +20,9 @@
 # SOFTWARE.
 
 import argparse
-import os
 import re
+import sys
+from pathlib import Path
 
 from lib.console import Console
 from lib.exceptions import NoWordpressApi, NSNotFoundException, WordPressApiNotV2
@@ -200,7 +201,7 @@ license, check LICENSE.txt for more information""",
 
     args = parser.parse_args()
 
-    motd = """
+    motd = f"""
  _    _______  ___                  _____
 | |  | | ___ \\|_  |                /  ___|
 | |  | | |_/ /  | | ___  ___  _ __ \\ `--.  ___ _ __ __ _ _ __   ___ _ __
@@ -209,16 +210,16 @@ license, check LICENSE.txt for more information""",
  \\/  \\/\\_|  \\____/ |___/\\___/|_| |_\\____/ \\___|_|  \\__,_| .__/ \\___|_|
                                                         | |
                                                         |_|
-    WPJsonScraper v%s
+    WPJsonScraper v{version}
     By Mickaël \"Kilawyn\" Walter
 
     Make sure you use this tool with the approval of the site owner. Even if
     these information are public or available with proper authentication, this
     could be considered as an intrusion.
 
-    Target: %s
+    Target: {args.target}
 
-    """ % (version, args.target)
+    """
 
     print(motd)
 
@@ -257,7 +258,7 @@ license, check LICENSE.txt for more information""",
         Console.log_success("Connection OK")
     except Exception:
         Console.log_error("Failed to connect to the server")
-        exit(0)
+        sys.exit(0)
 
     # Quite an ugly check to launch a search on all parameters edible
     # Should find something better (maybe in argparser doc?)
@@ -293,7 +294,7 @@ license, check LICENSE.txt for more information""",
                 "No WordPress API available at the given URL "
                 "(too old WordPress or not WordPress?)"
             )
-            exit()
+            sys.exit()
 
     if args.posts or args.all:
         try:
@@ -332,7 +333,7 @@ license, check LICENSE.txt for more information""",
                 "No WordPress API available at the given URL "
                 "(too old WordPress or not WordPress?)"
             )
-            exit()
+            sys.exit()
 
     if args.categories or args.all:
         try:
@@ -367,7 +368,7 @@ license, check LICENSE.txt for more information""",
             if args.crawl_ns == "all":
                 Console.log_info("Crawling all namespaces")
             else:
-                Console.log_info("Crawling %s namespace" % args.crawl_ns)
+                Console.log_info(f"Crawling {args.crawl_ns} namespace")
             ns_data = scanner.crawl_namespaces(args.crawl_ns)
             InfoDisplayer.display_crawled_ns(ns_data)
         except NSNotFoundException:
@@ -404,14 +405,14 @@ license, check LICENSE.txt for more information""",
             Exporter.export_posts(
                 posts_list,
                 Exporter.JSON,
-                os.path.join(args.post_export_folder, "posts"),
+                str(Path(args.post_export_folder) / "posts"),
                 tags_list,
                 categories_list,
                 users_list,
             )
             if post_number > 0:
                 Console.log_success(
-                    "Exported %d posts to %s" % (post_number, args.post_export_folder)
+                    f"Exported {post_number} posts to {args.post_export_folder}"
                 )
         except WordPressApiNotV2:
             Console.log_error("The API does not support WP V2")
@@ -430,13 +431,13 @@ license, check LICENSE.txt for more information""",
             Exporter.export_pages(
                 pages_list,
                 Exporter.JSON,
-                os.path.join(args.page_export_folder, "pages"),
+                str(Path(args.page_export_folder) / "pages"),
                 pages_list,
                 users_list,
             )
             if page_number > 0:
                 Console.log_success(
-                    "Exported %d pages to %s" % (page_number, args.page_export_folder)
+                    f"Exported {page_number} pages to {args.page_export_folder}"
                 )
         except WordPressApiNotV2:
             Console.log_error("The API does not support WP V2")
@@ -451,8 +452,7 @@ license, check LICENSE.txt for more information""",
             )
             if page_number > 0:
                 Console.log_success(
-                    "Exported %d comments to %s"
-                    % (page_number, args.comment_export_folder)
+                    f"Exported {page_number} comments to {args.comment_export_folder}"
                 )
         except WordPressApiNotV2:
             Console.log_error("The API does not support WP V2")
@@ -468,8 +468,7 @@ license, check LICENSE.txt for more information""",
                 categories_list,
             )
             Console.log_success(
-                "Exported %d categories to %s"
-                % (len(categories_list), args.category_export_file)
+                f"Exported {len(categories_list)} categories to {args.category_export_file}"
             )
         except WordPressApiNotV2:
             Console.log_error("The API does not support WP V2")
@@ -480,7 +479,7 @@ license, check LICENSE.txt for more information""",
             print()
             Exporter.export_tags(tags_list, Exporter.JSON, args.tag_export_file)
             Console.log_success(
-                "Exported %d tags to %s" % (len(tags_list), args.tag_export_file)
+                f"Exported {len(tags_list)} tags to {args.tag_export_file}"
             )
         except WordPressApiNotV2:
             Console.log_error("The API does not support WP V2")
@@ -491,14 +490,14 @@ license, check LICENSE.txt for more information""",
             print()
             Exporter.export_users(users_list, Exporter.JSON, args.user_export_file)
             Console.log_success(
-                "Exported %d users to %s" % (len(users_list), args.user_export_file)
+                f"Exported {len(users_list)} users to {args.user_export_file}"
             )
         except WordPressApiNotV2:
             Console.log_error("The API does not support WP V2")
 
     if args.media_folder is not None:
         Console.log_info("Downloading media files")
-        if not os.path.isdir(args.media_folder):
+        if not Path(args.media_folder).is_dir():
             Console.log_error("The destination is not a folder or does not exist")
         else:
             print("Pulling the media URLs")
@@ -507,12 +506,12 @@ license, check LICENSE.txt for more information""",
             if len(media) == 0:
                 Console.log_error("No media found")
                 return
-            print("%d media URLs found" % len(media))
+            print(f"{len(media)} media URLs found")
 
             print("Note: Only files over 10MB are logged here")
             number_downloaded = Exporter.download_media(media, args.media_folder)
             Console.log_success(
-                "Downloaded %d media to %s" % (number_downloaded, args.media_folder)
+                f"Downloaded {number_downloaded} media to {args.media_folder}"
             )
 
 

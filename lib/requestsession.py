@@ -134,13 +134,13 @@ class RequestSession:
                 response = self.s.get(url, verify=not self.ignore_ssl_verify)
         except requests.ConnectionError as e:
             if "Errno -5" in str(e) or "Errno -2" in str(e) or "Errno -3" in str(e):
-                Console.log_error("Could not resolve host %s" % url)
+                Console.log_error(f"Could not resolve host {url}")
                 raise ConnectionCouldNotResolve
             if "Errno 111" in str(e):
-                Console.log_error("Connection refused by %s" % url)
+                Console.log_error(f"Connection refused by {url}")
                 raise ConnectionRefused
             if "RemoteDisconnected" in str(e):
-                Console.log_error("Connection reset by %s" % url)
+                Console.log_error(f"Connection reset by {url}")
                 raise ConnectionReset
             print(e)
             raise e
@@ -169,7 +169,7 @@ class RequestSession:
             raise HTTPError404
         if response.status_code > 400:
             Console.log_error(
-                "Error %d while trying to fetch the API" % response.status_code
+                f"Error {response.status_code} while trying to fetch the API"
             )
             raise HTTPError
 

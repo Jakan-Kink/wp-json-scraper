@@ -23,8 +23,8 @@ import csv
 import html
 import json
 import mimetypes
-import os
 from datetime import datetime
+from pathlib import Path
 from urllib import parse as urlparse
 
 import requests
@@ -63,28 +63,26 @@ class Exporter:
         """
         files_number = 0
         media_length = len(media)
-        progress = 0
-        for m in media:
+        for progress, m in enumerate(media):
             r = requests.get(m, stream=True)
             if r.status_code == 200:
                 http_path = urlparse.urlparse(m).path.split("/")
-                local_path = output_folder
+                local_path = Path(output_folder)
                 if len(http_path) > 1:
                     for el in http_path[:-1]:
-                        local_path = os.path.join(local_path, el)
-                        if not os.path.isdir(local_path):
-                            os.mkdir(local_path)
+                        local_path = local_path / el
+                        if not local_path.is_dir():
+                            local_path.mkdir()
                 if slugs is None:
-                    local_path = os.path.join(local_path, http_path[-1])
+                    local_path = local_path / http_path[-1]
                 else:
                     ext = mimetypes.guess_extension(r.headers["Content-Type"])
-                    local_path = os.path.join(local_path, slugs[progress])
+                    local_path = local_path / slugs[progress]
                     if ext is not None:
-                        local_path += ext
-                with open(local_path, "wb") as f:
-                    i = 0
+                        local_path = Path(str(local_path) + ext)
+                with local_path.open("wb") as f:
                     content_size = int(r.headers["Content-Length"])
-                    for chunk in r.iter_content(Exporter.CHUNK_SIZE):
+                    for i, chunk in enumerate(r.iter_content(Exporter.CHUNK_SIZE)):
                         if content_size > 10485706:  # 10Mo
                             print_progress_bar(
                                 i * Exporter.CHUNK_SIZE,
@@ -93,15 +91,13 @@ class Exporter:
                                 length=70,
                             )
                         f.write(chunk)
-                        i += 1
                     if content_size > 10485706:  # 10Mo
                         print_progress_bar(
                             content_size, content_size, prefix=http_path[-1], length=70
                         )
                 files_number += 1
-            progress += 1
-            if progress % 10 == 1:
-                print("Downloaded file %d of %d" % (progress, media_length))
+            if progress % 10 == 0:
+                print(f"Downloaded file {progress} of {media_length}")
         return files_number
 
     @staticmethod
@@ -116,7 +112,7 @@ class Exporter:
         :param parameters_to_map: a dict containing lists of elements to map by ids with el
         """
         for key, value in el.items():
-            if key in parameters_to_map.keys() and parameters_to_map[key] is not None:
+            if key in parameters_to_map and parameters_to_map[key] is not None:
                 if type(value) is int:  # Only one ID to map
                     obj = get_by_id(parameters_to_map[key], value)
                     if obj is not None:
@@ -160,9 +156,9 @@ class Exporter:
                         fullpath = {}
                         # We look for the leaf first, not forgetting sibling branches for rebuilding the tree later
                         for k in key:
-                            if type(selected) is dict and k in selected.keys():
+                            if type(selected) is dict and k in selected:
                                 sib = {}
-                                for e in selected.keys():
+                                for e in selected:
                                     if e != k:
                                         sib[e] = selected[e]
                                 selected = selected[k]
@@ -176,12 +172,12 @@ class Exporter:
                             key.reverse()
                             fullpath[key[0]] = selected
                             s = len(siblings) - 1
-                            for e in siblings[s].keys():
+                            for e in siblings[s]:
                                 fullpath[e] = siblings[s][e]
                             for k in key[1:]:
                                 fullpath = {k: fullpath}
                                 s -= 1
-                                for e in siblings[s].keys():
+                                for e in siblings[s]:
                                     fullpath[e] = siblings[s][e]
                             key.reverse()
                             exported_el[key[0]] = fullpath[key[0]]
@@ -220,7 +216,7 @@ class Exporter:
         :param data: the actual data to export
         :param details: the details keys to look for
         """
-        with open(filename, "w", encoding="utf-8") as f:
+        with Path(filename).open("w", encoding="utf-8") as f:
             if fmt == Exporter.JSON:
                 # The JSON format is straightforward, we dump the flattened objects to JSON
                 json.dump(data, f, ensure_ascii=False, indent=4)
@@ -239,26 +235,25 @@ class Exporter:
                         if type(k) is str:
                             last_key = k
                             k = [k]
-                        if k[0] in el.keys():
+                        if k[0] in el:
                             selected = el[k[0]]
                         else:
                             el_csv[key] = ""
                             continue
                         if len(k) > 1:
                             for subkey in k[1:]:
-                                if subkey in selected.keys():
+                                if subkey in selected:
                                     selected = selected[subkey]
                                     last_key = subkey
                         # Once the leaf is selected, we verify if there is any kind of ID mapping and act accordingly
                         if (
                             type(selected) is dict
-                            and "id" in selected.keys()
-                            and "details" in selected.keys()
-                            and last_key in details.keys()
+                            and "id" in selected
+                            and "details" in selected
+                            and last_key in details
                         ):
-                            el_csv[key] = "%s (%d)" % (
-                                selected["details"][details[last_key]],
-                                selected["id"],
+                            el_csv[key] = (
+                                f"{selected['details'][details[last_key]]} ({selected['id']})"
                             )
                         elif type(selected) is not dict and type(selected) is not list:
                             el_csv[key] = selected
@@ -464,12 +459,12 @@ class Exporter:
         return len(exported_media)
 
     @staticmethod
-    def export_namespaces(namespaces, fmt, filename):
+    def export_namespaces(_namespaces, _fmt, _filename):
         """
         **NOT IMPLEMENTED** Exports namespaces in specified format to specified file.
 
-        :param namespaces: the namespaces to export
-        :param fmt: the export format (JSON or CSV)
+        :param _namespaces: the namespaces to export
+        :param _fmt: the export format (JSON or CSV)
         :return: the length of the list written to the file
         """
         Console.log_info("Namespaces export not available yet")
@@ -532,112 +527,112 @@ class Exporter:
 
         date_format = "%Y-%m-%dT%H:%M:%S-%Z"
 
-        if not os.path.isdir(folder):
-            os.makedirs(folder)
+        folder_path = Path(folder)
+        if not folder_path.is_dir():
+            folder_path.mkdir(parents=True)
         for post in posts:
             post_file = None
-            if "slug" in post.keys():
-                post_file = open(
-                    os.path.join(folder, post["slug"]) + ".html", "w", encoding="utf-8"
+            if "slug" in post:
+                post_file = (folder_path / f"{post['slug']}.html").open(
+                    "w", encoding="utf-8"
                 )
             else:
-                post_file = open(
-                    os.path.join(folder, str(post["id"])) + ".html",
+                post_file = (folder_path / f"{post['id']}.html").open(
                     "w",
                     encoding="utf-8",
                 )
 
             title = "Unknown"
-            if "title" in post.keys() and "rendered" in post["title"].keys():
+            if "title" in post and "rendered" in post["title"]:
                 title = post["title"]["rendered"]
 
             date_gmt = "Unknown"
-            if "date_gmt" in post.keys():
+            if "date_gmt" in post:
                 date_gmt = datetime.strptime(post["date_gmt"] + "-GMT", date_format)
             modified_gmt = "Unknown"
-            if "modified_gmt" in post.keys():
+            if "modified_gmt" in post:
                 modified_gmt = datetime.strptime(
                     post["modified_gmt"] + "-GMT", date_format
                 )
             status = "Unknown"
-            if "status" in post.keys():
+            if "status" in post:
                 status = post["status"]
 
             post_type = "Unknown"
-            if "type" in post.keys():
+            if "type" in post:
                 post_type = post["type"]
 
             link = "Unknown"
-            if "link" in post.keys():
+            if "link" in post:
                 link = html.escape(post["link"])
 
             comments = "Unknown"
-            if "comment_status" in post.keys():
+            if "comment_status" in post:
                 comments = html.escape(post["comment_status"])
 
             content = "Unknown"
-            if "content" in post.keys() and "rendered" in post["content"].keys():
+            if "content" in post and "rendered" in post["content"]:
                 content = post["content"]["rendered"]
 
             excerpt = "Unknown"
-            if "excerpt" in post.keys() and "rendered" in post["excerpt"].keys():
+            if "excerpt" in post and "rendered" in post["excerpt"]:
                 excerpt = post["excerpt"]["rendered"]
 
             author = "Unknown"
-            if "author" in post.keys() and users_list is not None:
+            if "author" in post and users_list is not None:
                 author_obj = get_by_id(users_list, post["author"])
-                author = "%d: " % post["author"]
+                author = f"{post['author']}: "
                 if author_obj is not None:
-                    if "name" in author_obj.keys():
+                    if "name" in author_obj:
                         author += author_obj["name"]
-                    if "slug" in author_obj.keys():
-                        author += "(%s)" % author_obj["slug"]
-                    if "link" in author_obj.keys():
-                        author += ' - <a href="%s">%s</a>' % (
+                    if "slug" in author_obj:
+                        author += "({})".format(author_obj["slug"])
+                    if "link" in author_obj:
+                        author += ' - <a href="{}">{}</a>'.format(
                             author_obj["link"],
                             author_obj["link"],
                         )
-            elif "author" in post.keys():
+            elif "author" in post:
                 author = str(post["author"])
 
             categories = "<li>Unknown</li>"
-            if "categories" in post.keys() and categories_list is not None:
+            if "categories" in post and categories_list is not None:
                 categories = ""
                 for cat in post["categories"]:
                     cat_obj = get_by_id(categories_list, cat)
-                    categories += "<li>%d: " % cat
+                    categories += f"<li>{cat}: "
                     if cat_obj is not None:
-                        if "name" in cat_obj.keys():
+                        if "name" in cat_obj:
                             categories += cat_obj["name"]
-                        if "link" in cat_obj.keys():
-                            categories += ' - <a href="%s">%s</a>' % (
+                        if "link" in cat_obj:
+                            categories += ' - <a href="{}">{}</a>'.format(
                                 html.escape(cat_obj["link"]),
                                 html.escape(cat_obj["link"]),
                             )
                     categories += "</li>"
-            elif "categories" in post.keys():
+            elif "categories" in post:
                 categories = ""
-                for cat in post["categories"]:
+                for _cat in post["categories"]:
                     categories += "<li>" + str(post["categories"]) + "</li>"
 
             tags = "<li>Unknown</li>"
-            if "tags" in post.keys() and tags_list is not None:
+            if "tags" in post and tags_list is not None:
                 tags = ""
                 for tag in post["tags"]:
                     tag_obj = get_by_id(tags_list, tag)
-                    tags += "<li>%d: " % tag
+                    tags += f"<li>{tag}: "
                     if tag_obj is not None:
-                        if "name" in tag_obj.keys():
+                        if "name" in tag_obj:
                             tags += tag_obj["name"]
-                        if "link" in tag_obj.keys():
-                            tags += ' - <a href="%s">%s</a>' % (
+                        if "link" in tag_obj:
+                            tags += ' - <a href="{}">{}</a>'.format(
                                 html.escape(tag_obj["link"]),
                                 html.escape(tag_obj["link"]),
                             )
                     tags += "</li>"
-            elif "tags" in post.keys():
+            elif "tags" in post:
                 tags = ""
-                for cat in post["tags"]:
+                for _cat in post["tags"]:
                     tags += "<li>" + str(post["categories"]) + "</li>"
 
             buffer = """<!DOCTYPE html>
@@ -709,9 +704,9 @@ class Exporter:
         """
         exported_comments = 0
         for post in posts:
-            if "comments" in post.keys() and len(post["comments"]) > 0:
+            if "comments" in post and len(post["comments"]) > 0:
                 for comment in post["comments"]:
-                    if "slug" in post.keys() and len(post["slug"]) > 0:
+                    if "slug" in post and len(post["slug"]) > 0:
                         Exporter.export_comments_helper(
                             comment, post["slug"], export_folder
                         )
@@ -728,24 +723,25 @@ class Exporter:
     @staticmethod
     def export_comments_helper(comment, post, export_folder):
         date_format = "%Y-%m-%dT%H:%M:%S-%Z"
-        if not os.path.isdir(export_folder):
-            os.mkdir(export_folder)
-        if not os.path.isdir(os.path.join(export_folder, post)):
-            os.mkdir(os.path.join(export_folder, post))
-        out_file = open(
-            os.path.join(export_folder, post, "%04d.html" % comment["id"]),
+        export_path = Path(export_folder)
+        if not export_path.is_dir():
+            export_path.mkdir()
+        post_path = export_path / post
+        if not post_path.is_dir():
+            post_path.mkdir()
+        out_file = (post_path / f"{comment['id']:04d}.html").open(
             "w",
             encoding="utf-8",
         )
         date_gmt = "Unknown"
-        if "date_gmt" in comment.keys():
+        if "date_gmt" in comment:
             date_gmt = datetime.strptime(comment["date_gmt"] + "-GMT", date_format)
         post_link = "None"
         if (
-            "_links" in comment.keys()
-            and "up" in comment["_links"].keys()
+            "_links" in comment
+            and "up" in comment["_links"]
             and len(comment["_links"].keys()) > 0
-            and "href" in comment["_links"]["up"][0].keys()
+            and "href" in comment["_links"]["up"][0]
         ):
             post_link = html.escape(comment["_links"]["up"][0]["href"])
         buffer = """

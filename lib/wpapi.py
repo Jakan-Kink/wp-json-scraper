@@ -20,6 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+import contextlib
 import copy
 import math
 from json.decoder import JSONDecodeError
@@ -192,16 +193,13 @@ class WPApi:
             raise NoWordpressApi
         self.basic_info = get_content_as_json(req)
 
-        if "name" in self.basic_info.keys():
+        if "name" in self.basic_info:
             self.name = self.basic_info["name"]
 
-        if "description" in self.basic_info.keys():
+        if "description" in self.basic_info:
             self.description = self.basic_info["description"]
 
-        if (
-            "namespaces" in self.basic_info.keys()
-            and "wp/v2" in self.basic_info["namespaces"]
-        ):
+        if "namespaces" in self.basic_info and "wp/v2" in self.basic_info["namespaces"]:
             self.has_v2 = True
 
         return self.basic_info
@@ -235,7 +233,7 @@ class WPApi:
         while more_entries and entries_left > 0:
             rest_url = url_path_join(self.url, self.api_path, (base_url % page))
             if start is not None:
-                rest_url += "&per_page=%d" % per_page
+                rest_url += f"&per_page={per_page}"
             try:
                 req = self.s.get(rest_url)
                 if (
@@ -244,7 +242,7 @@ class WPApi:
                 ) and "X-WP-Total" in req.headers:
                     total_entries = int(req.headers["X-WP-Total"])
                     total_pages = int(req.headers["X-WP-TotalPages"])
-                    print("Total number of entries: %d" % total_entries)
+                    print(f"Total number of entries: {total_entries}")
                     if start is not None and total_entries < start:
                         start = total_entries - 1
             except HTTPError400:
@@ -318,10 +316,8 @@ class WPApi:
             return None
         except Exception:
             raise WordPressApiNotV2
-        try:
+        with contextlib.suppress(JSONDecodeError):
             content = get_content_as_json(req)
-        except JSONDecodeError:
-            pass
 
         return content
 
@@ -536,12 +532,7 @@ class WPApi:
         if media is None:
             return []
         for m in media:
-            if (
-                m is not None
-                and type(m) is dict
-                and "source_url" in m.keys()
-                and "slug" in m.keys()
-            ):
+            if m is not None and type(m) is dict and "source_url" in m and "slug" in m:
                 urls.append(m["source_url"])
                 slugs.append(m["slug"])
         return urls, slugs
@@ -566,7 +557,7 @@ class WPApi:
         """
         if self.has_v2 is None or force:
             self.get_basic_info()
-        if "namespaces" in self.basic_info.keys():
+        if "namespaces" in self.basic_info:
             if start is None and num is None:
                 return self.basic_info["namespaces"]
             namespaces = copy.deepcopy(self.basic_info["namespaces"])
@@ -583,7 +574,7 @@ class WPApi:
         """
         if self.has_v2 is None:
             self.get_basic_info()
-        if "routes" in self.basic_info.keys():
+        if "routes" in self.basic_info:
             return self.basic_info["routes"]
         return []
 
@@ -597,7 +588,7 @@ class WPApi:
         if ns != "all" and ns not in namespaces:
             raise NSNotFoundException
         for url, route in routes.items():
-            if "namespace" not in route.keys() or "endpoints" not in route.keys():
+            if "namespace" not in route or "endpoints" not in route:
                 continue
             url_as_ns = url.lstrip("/")
             if "(?P<" in url or url_as_ns in namespaces:
@@ -612,7 +603,7 @@ class WPApi:
                     continue
                 keep = True
                 if len(endpoint["args"]) > 0 and type(endpoint["args"]) is dict:
-                    for name, arg in endpoint["args"].items():
+                    for arg in endpoint["args"].values():
                         if arg["required"]:
                             keep = False
                 if keep:
@@ -674,7 +665,7 @@ class WPApi:
             )
         return []
 
-    def get_obj_list(self, obj_type, start, limit, cache, kwargs={}):
+    def get_obj_list(self, obj_type, start, limit, cache, kwargs=None):
         """
         Returns a list of maximum limit objects specified by the starting object offset.
 
@@ -684,6 +675,8 @@ class WPApi:
         :param cache: if the cache should be used to avoid useless requests
         :param kwargs: additional parameters to pass to the function (for POST only)
         """
+        if kwargs is None:
+            kwargs = {}
         get_func = None
         if obj_type == WPApi.USER:
             get_func = self.get_users

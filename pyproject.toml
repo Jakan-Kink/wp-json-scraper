@@ -65,19 +65,10 @@ ignore = [
     "ERA001", # commented-out code (sometimes needed)
     "PLR0913", # too many arguments
     "PLR0912", # too many branches
-    "PLR2004", # magic value used in comparison
+    "PLR2004", # magic value comparisons (HTTP codes are self-documenting)
     "PLR0911", # too many return statements
     "ARG001", # unused function argument (common in callbacks)
     "ARG002", # unused method argument (common in abstract methods)
-    "PTH123", # pathlib open() (not always better)
-    "PTH100", # pathlib Path() for os.path.abspath (not always better)
-    "PTH104", # os.rename (not always better than pathlib)
-    "PTH108", # os.unlink (not always better than pathlib)
-    "PTH109", # os.getcwd (not always better than pathlib)
-    "PTH110", # os.path.exists (not always better than pathlib)
-    "PTH118", # os.path.join (not always better than pathlib)
-    "PTH202", # os.path.getsize (not always better than pathlib)
-    "PTH204", # os.path.getmtime (not always better than pathlib)
     "G004",   # logging f-string (we use this extensively)
     "PLC0415", # import outside top-level (intentional for error handling)
     "PLW0603", # global statement (used intentionally for module state)
@@ -86,34 +77,8 @@ ignore = [
     "PLR0915", # too many statements
     "E722",  # bare except (legacy code pattern in this codebase)
     # Temporary ignores to avoid complete refactor
-    "PTH102", # os.mkdir
-    "PTH103", # os.makedirs
-    "PTH107", # os.remove
-    "PTH112", # os.path.isdir
-    "PTH113", # os.path.isfile
-    "PTH119", # os.path.basename
-    "PTH120", # os.path.dirname
-    "PTH122", # os.path.splitext
-    "PTH207", # glob.glob / iglob
-    "B006",   # mutable default argument
-    "B007",   # unused loop variable
-    "B905",   # zip() without explicit strict parameter
-    "PLW2901", # for loop variable overwritten
-    "PLR1722", # use sys.exit() instead of exit()
-    "PLR1714", # consider merging multiple comparisons with 'in'
-    "UP031",  # use format specifiers instead of % format
-    "UP032",  # use f-string instead of .format()
-    "SIM102", # use single if statement instead of nested
-    "SIM105", # use contextlib.suppress
-    "SIM113", # use enumerate() for index variable
-    "SIM115", # use context manager for opening files
-    "SIM118", # use key in dict instead of key in dict.keys()
-    "PERF102", # dict.values() optimization
-    "PERF401", # list comprehension optimization
     "N806",   # variable naming (camelCase in legacy code)
     "N818",   # exception naming (should end with Error)
-    "A002",   # builtin shadowing
-    "ARG004", # unused static method argument
     "DTZ007", # naive datetime without timezone
 ]
 

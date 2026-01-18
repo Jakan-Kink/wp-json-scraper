@@ -1,8 +1,8 @@
 import argparse
 import json
-import os
 import re
 import time
+from pathlib import Path
 from urllib.parse import urljoin, urlparse
 
 import requests
@@ -10,11 +10,12 @@ from bs4 import BeautifulSoup
 
 
 def scrape_ngg_images(posts_file, output_folder, delay=0.5):
-    with open(posts_file) as f:
+    with Path(posts_file).open() as f:
         posts = json.load(f)
 
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
+    output_path = Path(output_folder)
+    if not output_path.exists():
+        output_path.mkdir(parents=True)
 
     print(f"Found {len(posts)} posts. Scanning for NextGEN Gallery images...")
 
@@ -84,33 +85,35 @@ def scrape_ngg_images(posts_file, output_folder, delay=0.5):
 
             if images_to_download:
                 print(f"  Found {len(images_to_download)} potential NGG images.")
-                post_media_dir = os.path.join(output_folder, slug)
-                if not os.path.exists(post_media_dir):
-                    os.makedirs(post_media_dir)
+                post_media_dir = output_path / slug
+                if not post_media_dir.exists():
+                    post_media_dir.mkdir(parents=True)
 
                 for img_url in images_to_download:
-                    if img_url.startswith("//"):
-                        img_url = "https:" + img_url
-                    elif img_url.startswith("/"):
-                        img_url = urljoin(link, img_url)
+                    # Normalize the URL
+                    normalized_url = img_url
+                    if normalized_url.startswith("//"):
+                        normalized_url = "https:" + normalized_url
+                    elif normalized_url.startswith("/"):
+                        normalized_url = urljoin(link, normalized_url)
 
-                    filename = os.path.basename(urlparse(img_url).path)
-                    filepath = os.path.join(post_media_dir, filename)
+                    filename = Path(urlparse(normalized_url).path).name
+                    filepath = post_media_dir / filename
 
-                    if os.path.exists(filepath):
+                    if filepath.exists():
                         # print(f"    Skipping existing: {filename}")
                         continue
 
                     try:
                         # print(f"    Downloading: {filename}")
-                        img_r = session.get(img_url, stream=True, timeout=10)
+                        img_r = session.get(normalized_url, stream=True, timeout=10)
                         if img_r.status_code == 200:
-                            with open(filepath, "wb") as f:
+                            with filepath.open("wb") as f:
                                 for chunk in img_r.iter_content(chunk_size=8192):
                                     f.write(chunk)
                             total_downloaded += 1
                     except Exception as e:
-                        print(f"    Error downloading {img_url}: {e}")
+                        print(f"    Error downloading {normalized_url}: {e}")
 
             time.sleep(delay)
 

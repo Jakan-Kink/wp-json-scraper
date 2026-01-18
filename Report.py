@@ -8,14 +8,15 @@ Adapted from gut0leao/wp-json-scraper
 """
 
 import json
-import os
 import sys
+from pathlib import Path
 
 
 def load_json(path):
     """Load JSON file if it exists, return None otherwise"""
-    if os.path.exists(path):
-        with open(path, encoding="utf-8") as f:
+    path_obj = Path(path)
+    if path_obj.exists():
+        with path_obj.open(encoding="utf-8") as f:
             return json.load(f)
     return None
 
@@ -57,35 +58,35 @@ def main():
         print("  - users.json (optional)")
         sys.exit(1)
 
-    export_dir = sys.argv[1]
+    export_dir = Path(sys.argv[1])
 
-    if not os.path.isdir(export_dir):
+    if not export_dir.is_dir():
         print(f"Error: '{export_dir}' is not a valid directory")
         sys.exit(1)
 
     # Load data files
-    info = load_json(os.path.join(export_dir, "info.json"))
+    info = load_json(export_dir / "info.json")
     # Handle case where info is a list
     if isinstance(info, list) and len(info) > 0:
         info = info[0]
 
-    categories = load_json(os.path.join(export_dir, "categories.json")) or []
-    tags = load_json(os.path.join(export_dir, "tags.json")) or []
+    categories = load_json(export_dir / "categories.json") or []
+    tags = load_json(export_dir / "tags.json") or []
 
     # Try both locations for posts/pages (in subdirs or at root)
     posts = (
-        load_json(os.path.join(export_dir, "posts", "posts.json"))
-        or load_json(os.path.join(export_dir, "posts.json"))
+        load_json(export_dir / "posts" / "posts.json")
+        or load_json(export_dir / "posts.json")
         or []
     )
     pages = (
-        load_json(os.path.join(export_dir, "pages", "pages.json"))
-        or load_json(os.path.join(export_dir, "pages.json"))
+        load_json(export_dir / "pages" / "pages.json")
+        or load_json(export_dir / "pages.json")
         or []
     )
 
-    media = load_json(os.path.join(export_dir, "media.json")) or []
-    users = load_json(os.path.join(export_dir, "users.json")) or []
+    media = load_json(export_dir / "media.json") or []
+    users = load_json(export_dir / "users.json") or []
 
     report_lines = []
     report_lines.append("=" * 50)
@@ -153,8 +154,7 @@ def main():
         ppc = posts_per_category(posts, categories)
         for cat, plist in sorted(ppc.items()):
             report_lines.append(f"  📂 {cat}:")
-            for post_title in plist:
-                report_lines.append(f"    - 📝 {post_title}")
+            report_lines.extend(f"    - 📝 {post_title}" for post_title in plist)
         report_lines.append("")
 
     # Pages
@@ -212,8 +212,8 @@ def main():
     report_lines.append("=" * 50)
 
     # Write report
-    report_path = os.path.join(export_dir, "report.txt")
-    with open(report_path, "w", encoding="utf-8") as f:
+    report_path = export_dir / "report.txt"
+    with report_path.open("w", encoding="utf-8") as f:
         f.write("\n".join(report_lines))
 
     print(f"✅ Report generated successfully: {report_path}")

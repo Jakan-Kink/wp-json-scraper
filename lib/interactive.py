@@ -22,10 +22,10 @@ SOFTWARE.
 
 import argparse
 import cmd
-import os
 import re
 import shlex
 import sys
+from pathlib import Path
 
 from lib.console import Console
 from lib.exporter import Exporter
@@ -85,7 +85,11 @@ class InteractiveShell(cmd.Cmd):
         self.scanner = WPApi(self.target, session=session)
 
     @staticmethod
-    def export_decorator(export_func, is_all, export_str, json, csv, values, kwargs={}):
+    def export_decorator(
+        export_func, is_all, export_str, json, csv, values, kwargs=None
+    ):
+        if kwargs is None:
+            kwargs = {}
         if json is not None:
             json_file = json
             if is_all:
@@ -208,7 +212,7 @@ class InteractiveShell(cmd.Cmd):
         except WordPressApiNotV2:
             Console.log_error("The API does not support WP V2")
         except OSError as e:
-            Console.log_error("Could not open %s for writing" % e.filename)
+            Console.log_error(f"Could not open {e.filename} for writing")
         print()
 
     def list_obj(
@@ -246,7 +250,7 @@ class InteractiveShell(cmd.Cmd):
         except WordPressApiNotV2:
             Console.log_error("The API does not support WP V2")
         except OSError as e:
-            Console.log_error("Could not open %s for writing" % e.filename)
+            Console.log_error(f"Could not open {e.filename} for writing")
         print()
 
     def do_exit(self, arg):
@@ -267,25 +271,25 @@ class InteractiveShell(cmd.Cmd):
         args = parser.custom_parse_args(arg)
         if args is None:
             return
-        if args.what == "all" or args.what == "target":
-            print("Target: %s" % self.target)
-        if args.what == "all" or args.what == "proxy":
+        if args.what in {"all", "target"}:
+            print(f"Target: {self.target}")
+        if args.what in {"all", "proxy"}:
             proxies = self.session.get_proxies()
             if proxies is not None and len(proxies) > 0:
                 print("Proxies:")
                 for key, value in proxies.items():
-                    print("\t%s: %s" % (key, value))
+                    print(f"\t{key}: {value}")
             else:
                 print("Proxy: none")
-        if args.what == "all" or args.what == "cookies":
+        if args.what in {"all", "cookies"}:
             cookies = self.session.get_cookies()
             if len(cookies) > 0:
                 print("Cookies:")
                 for key, value in cookies.items():
-                    print("\t%s: %s" % (key, value))
+                    print(f"\t{key}: {value}")
             else:
                 print("Cookies: none")
-        if args.what == "all" or args.what == "credentials":
+        if args.what in {"all", "credentials"}:
             credentials = self.session.get_creds()
             if credentials is not None:
                 creds_str = "Credentials: "
@@ -294,8 +298,8 @@ class InteractiveShell(cmd.Cmd):
                 print(creds_str[:-1])
             else:
                 print("Credentials: none")
-        if args.what == "all" or args.what == "version":
-            print("WPJsonScraper version: %s" % self.version)
+        if args.what in {"all", "version"}:
+            print(f"WPJsonScraper version: {self.version}")
         print()
 
     def do_set(self, arg):
@@ -323,14 +327,14 @@ class InteractiveShell(cmd.Cmd):
             if re.match(r"^.+/$", self.target) is None:
                 self.target += "/"
             InteractiveShell.prompt = Console.red + self.target + Console.normal + " > "
-            print("target = %s" % args.value)
+            print(f"target = {args.value}")
             self.scanner = WPApi(self.target, session=self.session)
             Console.log_info(
                 "Cache is erased but session stays the same (with cookies and authorization)"
             )
         elif args.what == "proxy":
             self.session.set_proxy(args.value)
-            print("proxy = %s" % args.value)
+            print(f"proxy = {args.value}")
         elif args.what == "cookies":
             self.session.set_cookies(args.value)
             print("Cookies set!")
@@ -399,21 +403,21 @@ class InteractiveShell(cmd.Cmd):
             "json": args.json,
             "csv": args.csv,
         }
-        if args.what == "all" or args.what == "users":
+        if args.what in {"all", "users"}:
             self.list_obj(WPApi.USER, **kwargs)
-        if args.what == "all" or args.what == "tags":
+        if args.what in {"all", "tags"}:
             self.list_obj(WPApi.TAG, **kwargs)
-        if args.what == "all" or args.what == "categories":
+        if args.what in {"all", "categories"}:
             self.list_obj(WPApi.CATEGORY, **kwargs)
-        if args.what == "all" or args.what == "posts":
+        if args.what in {"all", "posts"}:
             self.list_obj(WPApi.POST, **kwargs)
-        if args.what == "all" or args.what == "pages":
+        if args.what in {"all", "pages"}:
             self.list_obj(WPApi.PAGE, **kwargs)
-        if args.what == "all" or args.what == "comments":
+        if args.what in {"all", "comments"}:
             self.list_obj(WPApi.COMMENT, **kwargs)
-        if args.what == "all" or args.what == "media":
+        if args.what in {"all", "media"}:
             self.list_obj(WPApi.MEDIA, **kwargs)
-        if args.what == "all" or args.what == "namespaces":
+        if args.what in {"all", "namespaces"}:
             self.list_obj(WPApi.NAMESPACE, **kwargs)
 
     def do_fetch(self, arg):
@@ -528,7 +532,7 @@ class InteractiveShell(cmd.Cmd):
                 except WordPressApiNotV2:
                     Console.log_error("The API does not support WP V2")
                 except OSError as e:
-                    Console.log_error("Could not open %s for writing" % e.filename)
+                    Console.log_error(f"Could not open {e.filename} for writing")
             print()
 
     def do_dl(self, arg):
@@ -557,7 +561,7 @@ class InteractiveShell(cmd.Cmd):
         if args is None:
             return
 
-        if not os.path.isdir(args.dest):
+        if not Path(args.dest).is_dir():
             Console.log_error("The destination is not a folder or does not exist")
             return
 
@@ -566,7 +570,7 @@ class InteractiveShell(cmd.Cmd):
         if len(media) == 0:
             Console.log_error("No media found corresponding to the criteria")
             return
-        print("%d media URLs found" % len(media))
+        print(f"{len(media)} media URLs found")
         answer = input("Do you wish to proceed to download? (y/N)")
         if answer.lower() != "y":
             return
@@ -577,7 +581,7 @@ class InteractiveShell(cmd.Cmd):
             number_downloaded = Exporter.download_media(media, args.dest, slugs)
         else:
             number_downloaded = Exporter.download_media(media, args.dest)
-        print("Downloaded %d media to %s" % (number_downloaded, args.dest))
+        print(f"Downloaded {number_downloaded} media to {args.dest}")
 
 
 def start_interactive(target, session, version):

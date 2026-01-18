@@ -24,17 +24,17 @@ import json
 from urllib.parse import urlsplit, urlunsplit
 
 
-def get_by_id(value, id):
+def get_by_obj_id(value, obj_id):
     """
     Utility function to retrieve a value by and ID in a list of dicts, returns
     None of no correspondance have been made
     param value: the dict to process
-    param id: the id to get
+    param obj_id: the obj_id to get
     """
     if value is None:
         return None
     for val in value:
-        if "id" in val.keys() and val["id"] == id:
+        if "obj_id" in val and val["obj_id"] == obj_id:
             return val
     return None
 
@@ -44,7 +44,7 @@ def get_by_id(value, id):
 def url_path_join(*parts):
     """Normalize url parts and join them with a slash."""
     schemes, netlocs, paths, queries, fragments = zip(
-        *(urlsplit(part) for part in parts)
+        *(urlsplit(part) for part in parts), strict=True
     )
     scheme = first(schemes)
     netloc = first(netlocs)
@@ -87,7 +87,7 @@ def print_progress_bar(
         filledLength = 0
 
     bar = fill * filledLength + "-" * (length - filledLength)
-    print("\r%s |%s| %s%% %s" % (prefix, bar, percent, suffix), end="\r")
+    print(f"\r{prefix} |{bar}| {percent}% {suffix}", end="\r")
     # Print New Line on Complete
     if iteration == total:
         print()
