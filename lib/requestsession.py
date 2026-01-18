@@ -22,6 +22,8 @@ SOFTWARE.
 
 from http.cookies import SimpleCookie
 import requests
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 from lib.console import Console
 
@@ -63,7 +65,7 @@ class RequestSession:
     Wrapper to handle the requests library with session support
     """
 
-    def __init__(self, proxy=None, cookies=None, authorization=None):
+    def __init__(self, proxy=None, cookies=None, authorization=None, ignore_ssl_verify=False):
         """
         Creates a new RequestSession instance
         param proxy: a dict containing a proxy server string for HTTP and/or
@@ -72,6 +74,7 @@ class RequestSession:
         param authorization: a tuple containing login and password or
         requests.auth.HTTPBasicAuth for basic authentication or
         requests.auth.HTTPDigestAuth for NTLM-like authentication
+        param ignore_ssl_verify: if True, disables SSL certificate verification (passed to requests as verify=False)
         """
         self.s = requests.Session()
         if proxy is not None:
@@ -83,6 +86,7 @@ class RequestSession:
             type(authorization) is requests.auth.HTTPBasicAuth or
             type(authorization) is requests.auth.HTTPDigestAuth):
             self.s.auth = authorization
+        self.ignore_ssl_verify = ignore_ssl_verify
 
     def get(self, url):
         """
@@ -107,9 +111,9 @@ class RequestSession:
         response = None
         try:
             if method == "post":
-                response = self.s.post(url, data)
+                response = self.s.post(url, data=data, verify=not self.ignore_ssl_verify)
             else:
-                response = self.s.get(url)
+                response = self.s.get(url, verify=not self.ignore_ssl_verify)
         except requests.ConnectionError as e:
             if "Errno -5" in str(e) or "Errno -2" in str(e)\
               or "Errno -3" in str(e):

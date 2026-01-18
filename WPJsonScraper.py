@@ -115,6 +115,18 @@ license, check LICENSE.txt for more information""")
                         dest='comment_export_folder',
                         action='store',
                         help='export comments to a specified destination folder')
+    parser.add_argument('--export-categories',
+                        dest='category_export_file',
+                        action='store',
+                        help='export categories to a specified JSON file')
+    parser.add_argument('--export-tags',
+                        dest='tag_export_file',
+                        action='store',
+                        help='export tags to a specified JSON file')
+    parser.add_argument('--export-users',
+                        dest='user_export_file',
+                        action='store',
+                        help='export users to a specified JSON file')
     parser.add_argument('--download-media',
                         dest='media_folder',
                         action='store',
@@ -153,6 +165,11 @@ license, check LICENSE.txt for more information""")
                         action='store',
                         help='define specific cookies to send with the request '
                         'in the format cookie1=foo; cookie2=bar')
+    parser.add_argument('--ignore-ssl-verify',
+                        dest='ignore_ssl_verify',
+                        action='store_true',
+                        help='disable SSL certificate verification (useful for '
+                        'self-signed certificates)')
     parser.add_argument('--no-color',
                         dest='nocolor',
                         action='store_true',
@@ -213,7 +230,7 @@ license, check LICENSE.txt for more information""")
             authorization = (authorization_list[0],
               ':'.join(authorization_list[1:]))
     session = RequestSession(proxy=proxy, cookies=cookies,
-      authorization=authorization)
+      authorization=authorization, ignore_ssl_verify=args.ignore_ssl_verify)
     try:
         session.get(target)
         Console.log_success("Connection OK")
@@ -391,6 +408,37 @@ license, check LICENSE.txt for more information""")
             if page_number > 0:
                 Console.log_success("Exported %d comments to %s" %
                 (page_number, args.comment_export_folder))
+        except WordPressApiNotV2:
+            Console.log_error("The API does not support WP V2")
+
+    if args.category_export_file is not None:
+        try:
+            categories_list = scanner.get_categories()
+            print()
+            Exporter.export_categories(categories_list, Exporter.JSON,
+             args.category_export_file, categories_list)
+            Console.log_success("Exported %d categories to %s" %
+             (len(categories_list), args.category_export_file))
+        except WordPressApiNotV2:
+            Console.log_error("The API does not support WP V2")
+
+    if args.tag_export_file is not None:
+        try:
+            tags_list = scanner.get_tags()
+            print()
+            Exporter.export_tags(tags_list, Exporter.JSON, args.tag_export_file)
+            Console.log_success("Exported %d tags to %s" %
+             (len(tags_list), args.tag_export_file))
+        except WordPressApiNotV2:
+            Console.log_error("The API does not support WP V2")
+
+    if args.user_export_file is not None:
+        try:
+            users_list = scanner.get_users()
+            print()
+            Exporter.export_users(users_list, Exporter.JSON, args.user_export_file)
+            Console.log_success("Exported %d users to %s" %
+             (len(users_list), args.user_export_file))
         except WordPressApiNotV2:
             Console.log_error("The API does not support WP V2")
 
