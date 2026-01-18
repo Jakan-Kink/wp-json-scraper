@@ -145,10 +145,10 @@ class InfoDisplayer:
                             first = True
                             for val in props['enum']:
                                 if first:
-                                    allowed += val
+                                    allowed += str(val)
                                     first = False
                                 else:
-                                    allowed += ", " + val
+                                    allowed += ", " + str(val)
                             print(allowed)
                         if 'description' in props.keys():
                             print("            " + str(props['description']))

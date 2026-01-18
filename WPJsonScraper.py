@@ -329,12 +329,27 @@ license, check LICENSE.txt for more information""")
     if args.post_export_folder is not None:
         try:
             posts_list = scanner.get_posts()
-            tags_list = scanner.get_tags()
-            categories_list = scanner.get_categories()
-            users_list = scanner.get_users()
+            print(f"DEBUG: Retrieved {len(posts_list) if posts_list else 0} posts for export.")
+            try:
+                tags_list = scanner.get_tags()
+            except:
+                tags_list = None
+            try:
+                categories_list = scanner.get_categories()
+            except:
+                categories_list = None
+            try:
+                users_list = scanner.get_users()
+            except:
+                users_list = None
             print()
             post_number = Exporter.export_posts_html(posts_list,
              args.post_export_folder,
+             tags_list,
+             categories_list,
+             users_list)
+            Exporter.export_posts(posts_list, Exporter.JSON,
+             os.path.join(args.post_export_folder, "posts"),
              tags_list,
              categories_list,
              users_list)
@@ -347,12 +362,19 @@ license, check LICENSE.txt for more information""")
     if args.page_export_folder is not None:
         try:
             pages_list = scanner.get_pages()
-            users_list = scanner.get_users()
+            try:
+                users_list = scanner.get_users()
+            except:
+                users_list = None
             print()
             page_number = Exporter.export_posts_html(pages_list,
              args.page_export_folder,
              None,
              None,
+             users_list)
+            Exporter.export_pages(pages_list, Exporter.JSON,
+             os.path.join(args.page_export_folder, "pages"),
+             pages_list,
              users_list)
             if page_number> 0:
                 Console.log_success("Exported %d pages to %s" %
