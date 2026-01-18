@@ -7,15 +7,15 @@ Analyzes exported WordPress data and generates a human-readable summary report.
 Adapted from gut0leao/wp-json-scraper
 """
 
-import os
 import json
+import os
 import sys
 
 
 def load_json(path):
     """Load JSON file if it exists, return None otherwise"""
     if os.path.exists(path):
-        with open(path, 'r', encoding='utf-8') as f:
+        with open(path, encoding="utf-8") as f:
             return json.load(f)
     return None
 
@@ -32,13 +32,13 @@ def tree_categories(categories, parent=0, prefix=""):
 
 def posts_per_category(posts, categories):
     """Group posts by category"""
-    cat_map = {cat['id']: cat['name'] for cat in categories}
+    cat_map = {cat["id"]: cat["name"] for cat in categories}
     result = {}
     for post in posts:
-        for cat_id in post.get('categories', []):
+        for cat_id in post.get("categories", []):
             cat_name = cat_map.get(cat_id, f"ID:{cat_id}")
             result.setdefault(cat_name, []).append(
-                post.get('title', {}).get('rendered', '')
+                post.get("title", {}).get("rendered", "")
             )
     return result
 
@@ -73,10 +73,16 @@ def main():
     tags = load_json(os.path.join(export_dir, "tags.json")) or []
 
     # Try both locations for posts/pages (in subdirs or at root)
-    posts = load_json(os.path.join(export_dir, "posts", "posts.json")) or \
-            load_json(os.path.join(export_dir, "posts.json")) or []
-    pages = load_json(os.path.join(export_dir, "pages", "pages.json")) or \
-            load_json(os.path.join(export_dir, "pages.json")) or []
+    posts = (
+        load_json(os.path.join(export_dir, "posts", "posts.json"))
+        or load_json(os.path.join(export_dir, "posts.json"))
+        or []
+    )
+    pages = (
+        load_json(os.path.join(export_dir, "pages", "pages.json"))
+        or load_json(os.path.join(export_dir, "pages.json"))
+        or []
+    )
 
     media = load_json(os.path.join(export_dir, "media.json")) or []
     users = load_json(os.path.join(export_dir, "users.json")) or []
@@ -156,7 +162,7 @@ def main():
         report_lines.append("PAGES")
         report_lines.append("-" * 50)
         for page in pages:
-            title = page.get('title', {}).get('rendered', page.get('title', 'Untitled'))
+            title = page.get("title", {}).get("rendered", page.get("title", "Untitled"))
             report_lines.append(f"  📄 {title}")
         report_lines.append("")
 
@@ -165,9 +171,9 @@ def main():
         report_lines.append("MEDIA FILES")
         report_lines.append("-" * 50)
         for m in media:
-            url = m.get('source_url', m.get('guid', {}).get('rendered', ''))
-            name = m.get('title', {}).get('rendered', m.get('title', 'Unnamed'))
-            mime_type = m.get('mime_type', '')
+            url = m.get("source_url", m.get("guid", {}).get("rendered", ""))
+            name = m.get("title", {}).get("rendered", m.get("title", "Unnamed"))
+            mime_type = m.get("mime_type", "")
             report_lines.append(f"  🖼️  {name}")
             if mime_type:
                 report_lines.append(f"     Type: {mime_type}")
@@ -182,14 +188,14 @@ def main():
         # Calculate post counts per user
         user_post_count = {}
         for post in posts:
-            author_id = post.get('author')
+            author_id = post.get("author")
             user_post_count[author_id] = user_post_count.get(author_id, 0) + 1
 
         # Create user list with counts
         users_with_count = []
         for user in users:
-            user_id = user.get('id')
-            name = user.get('name', user.get('username', 'Unknown'))
+            user_id = user.get("id")
+            name = user.get("name", user.get("username", "Unknown"))
             post_count = user_post_count.get(user_id, 0)
             users_with_count.append((name, post_count))
 
@@ -211,7 +217,7 @@ def main():
         f.write("\n".join(report_lines))
 
     print(f"✅ Report generated successfully: {report_path}")
-    print(f"\n📊 Summary:")
+    print("\n📊 Summary:")
     print(f"   - {len(posts)} posts")
     print(f"   - {len(pages)} pages")
     print(f"   - {len(categories)} categories")

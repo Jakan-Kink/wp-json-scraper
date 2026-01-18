@@ -21,8 +21,8 @@ SOFTWARE.
 """
 
 import json
-
 from urllib.parse import urlsplit, urlunsplit
+
 
 def get_by_id(value, id):
     """
@@ -34,31 +34,37 @@ def get_by_id(value, id):
     if value is None:
         return None
     for val in value:
-        if 'id' in val.keys() and val['id'] == id:
+        if "id" in val.keys() and val["id"] == id:
             return val
     return None
+
 
 # Neat code part from https://codereview.stackexchange.com/questions/13027/joini
 # ng-url-path-components-intelligently
 def url_path_join(*parts):
     """Normalize url parts and join them with a slash."""
-    schemes, netlocs, paths, queries, fragments = \
-    zip(*(urlsplit(part) for part in parts))
+    schemes, netlocs, paths, queries, fragments = zip(
+        *(urlsplit(part) for part in parts)
+    )
     scheme = first(schemes)
     netloc = first(netlocs)
-    path = '/'.join(x.strip('/') for x in paths if x)
+    path = "/".join(x.strip("/") for x in paths if x)
     query = first(queries)
     fragment = first(fragments)
     return urlunsplit((scheme, netloc, path, query, fragment))
 
-def first(sequence, default=''):
+
+def first(sequence, default=""):
     return next((x for x in sequence if x), default)
+
 
 # Code from https://stackoverflow.com/questions/3173320/text-progress-bar-in-th
 # e-console
 
-def print_progress_bar (iteration, total, prefix = '', suffix = '', decimals = 1,\
- length = 100, fill = '█'):
+
+def print_progress_bar(
+    iteration, total, prefix="", suffix="", decimals=1, length=100, fill="█"
+):
     """
     Call in a loop to create terminal progress bar
     @params:
@@ -72,33 +78,34 @@ def print_progress_bar (iteration, total, prefix = '', suffix = '', decimals = 1
         fill        - Optional  : bar fill character (Str)
     """
     try:
-      percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / \
-      float(total)))
-      filledLength = int(length * iteration // total)
+        percent = ("{0:." + str(decimals) + "f}").format(
+            100 * (iteration / float(total))
+        )
+        filledLength = int(length * iteration // total)
     except:
-      percent = 0
-      filledLength = 0
+        percent = 0
+        filledLength = 0
 
-    bar = fill * filledLength + '-' * (length - filledLength)
-    print('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix), end = '\r')
+    bar = fill * filledLength + "-" * (length - filledLength)
+    print("\r%s |%s| %s%% %s" % (prefix, bar, percent, suffix), end="\r")
     # Print New Line on Complete
-    if iteration == total: 
+    if iteration == total:
         print()
 
-def get_content_as_json (response_obj):
+
+def get_content_as_json(response_obj):
     """
-    When a BOM is present (see issue #2), UTF-8 is not properly decoded by 
-    Response.json() method. This is a helper function that returns a json value 
+    When a BOM is present (see issue #2), UTF-8 is not properly decoded by
+    Response.json() method. This is a helper function that returns a json value
     even if a BOM is present in UTF-8 text
     @params:
         response_obj: a requests Response instance
     @returns: a decoded json object (list or dict)
     """
-    if response_obj.content[:3]== b'\xef\xbb\xbf': # UTF-8 BOM
+    if response_obj.content[:3] == b"\xef\xbb\xbf":  # UTF-8 BOM
         content = response_obj.content.decode("utf-8-sig")
         return json.loads(content)
-    else:
-        try:
-            return response_obj.json()
-        except:
-            return {}
+    try:
+        return response_obj.json()
+    except:
+        return {}

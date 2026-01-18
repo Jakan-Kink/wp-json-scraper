@@ -25,6 +25,7 @@ class Console:
     """
     A little helper class to allow console management (like color)
     """
+
     normal = "\033[0m"
     blue = "\033[94m"
     green = "\033[92m"

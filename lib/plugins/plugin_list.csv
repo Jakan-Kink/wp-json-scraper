@@ -1,3 +1,4 @@
+Plugin,Description,URL
 oembed/1.0,Allows embedded representation of a URL,
 contact-form-7/v1,Manages multiple contact forms,https://wordpress.org/plugins/contact-form-7/
 wc/v1,WooCommerce is a free eCommerce plugin that allows to sell anything,https://wordpress.org/plugins/woocommerce/
@@ -142,7 +143,7 @@ wpv/v1,,
 tho/v1,,
 aghigh/v1,,
 spnl/v1,A Newsletter Plugin for WordPress,https://wordpress.org/plugins/search/spnl/
-task_manager/v1,Task manager,https://wordpress.org/plugins/task-manager/ 
+task_manager/v1,Task manager,https://wordpress.org/plugins/task-manager/
 customfiy/v1,Theme Customizer Booster,https://wordpress.org/plugins/customify/
 CHifcoRegCardPluginV2/v1,,
 CHifcoFireBasePlugin/v1,,

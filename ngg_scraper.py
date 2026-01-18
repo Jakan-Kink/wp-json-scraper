@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup
 
 
 def scrape_ngg_images(posts_file, output_folder, delay=0.5):
-    with open(posts_file, "r") as f:
+    with open(posts_file) as f:
         posts = json.load(f)
 
     if not os.path.exists(output_folder):

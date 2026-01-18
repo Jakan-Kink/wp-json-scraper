@@ -21,51 +21,67 @@ SOFTWARE.
 """
 
 from http.cookies import SimpleCookie
+
 import requests
 import urllib3
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 from lib.console import Console
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 
 class ConnectionCouldNotResolve(Exception):
     pass
 
+
 class ConnectionReset(Exception):
     pass
+
 
 class ConnectionRefused(Exception):
     pass
 
+
 class ConnectionTimeout(Exception):
     pass
+
 
 class HTTPError400(Exception):
     pass
 
+
 class HTTPError401(Exception):
     pass
+
 
 class HTTPError403(Exception):
     pass
 
+
 class HTTPError404(Exception):
     pass
+
 
 class HTTPError500(Exception):
     pass
 
+
 class HTTPError502(Exception):
     pass
 
+
 class HTTPError(Exception):
     pass
+
 
 class RequestSession:
     """
     Wrapper to handle the requests library with session support
     """
 
-    def __init__(self, proxy=None, cookies=None, authorization=None, ignore_ssl_verify=False):
+    def __init__(
+        self, proxy=None, cookies=None, authorization=None, ignore_ssl_verify=False
+    ):
         """
         Creates a new RequestSession instance
         param proxy: a dict containing a proxy server string for HTTP and/or
@@ -82,9 +98,10 @@ class RequestSession:
         if cookies is not None:
             self.set_cookies(cookies)
         if authorization is not None and (
-            type(authorization) is tuple and len(authorization) == 2 or
-            type(authorization) is requests.auth.HTTPBasicAuth or
-            type(authorization) is requests.auth.HTTPDigestAuth):
+            (type(authorization) is tuple and len(authorization) == 2)
+            or type(authorization) is requests.auth.HTTPBasicAuth
+            or type(authorization) is requests.auth.HTTPDigestAuth
+        ):
             self.s.auth = authorization
         self.ignore_ssl_verify = ignore_ssl_verify
 
@@ -94,7 +111,6 @@ class RequestSession:
         exception following the context
         """
         return self.do_request("get", url)
-
 
     def post(self, url, data=None):
         """
@@ -111,53 +127,54 @@ class RequestSession:
         response = None
         try:
             if method == "post":
-                response = self.s.post(url, data=data, verify=not self.ignore_ssl_verify)
+                response = self.s.post(
+                    url, data=data, verify=not self.ignore_ssl_verify
+                )
             else:
                 response = self.s.get(url, verify=not self.ignore_ssl_verify)
         except requests.ConnectionError as e:
-            if "Errno -5" in str(e) or "Errno -2" in str(e)\
-              or "Errno -3" in str(e):
+            if "Errno -5" in str(e) or "Errno -2" in str(e) or "Errno -3" in str(e):
                 Console.log_error("Could not resolve host %s" % url)
                 raise ConnectionCouldNotResolve
-            elif "Errno 111" in str(e):
+            if "Errno 111" in str(e):
                 Console.log_error("Connection refused by %s" % url)
                 raise ConnectionRefused
-            elif "RemoteDisconnected" in str(e):
+            if "RemoteDisconnected" in str(e):
                 Console.log_error("Connection reset by %s" % url)
                 raise ConnectionReset
-            else:
-                print(e)
-                raise e
+            print(e)
+            raise e
         except Exception as e:
             raise e
 
         if response.status_code == 400:
             raise HTTPError400
-        elif response.status_code == 401:
-            Console.log_error("Error 401 (Unauthorized) while trying to fetch"
-            " the API")
+        if response.status_code == 401:
+            Console.log_error("Error 401 (Unauthorized) while trying to fetch the API")
             raise HTTPError401
-        elif response.status_code == 403:
-            Console.log_error("Error 403 (Authorization Required) while trying"
-            " to fetch the API")
+        if response.status_code == 403:
+            Console.log_error(
+                "Error 403 (Authorization Required) while trying to fetch the API"
+            )
             raise HTTPError403
-        elif response.status_code == 404:
+        if response.status_code == 404:
             raise HTTPError404
-        elif response.status_code == 500:
-            Console.log_error("Error 500 (Internal Server Error) while trying"
-            " to fetch the API")
+        if response.status_code == 500:
+            Console.log_error(
+                "Error 500 (Internal Server Error) while trying to fetch the API"
+            )
             raise HTTPError500
-        elif response.status_code == 502:
-            Console.log_error("Error 502 (Bad Gateway) while trying"
-            " to fetch the API")
+        if response.status_code == 502:
+            Console.log_error("Error 502 (Bad Gateway) while trying to fetch the API")
             raise HTTPError404
-        elif response.status_code > 400:
-            Console.log_error("Error %d while trying to fetch the API" %
-            response.status_code)
+        if response.status_code > 400:
+            Console.log_error(
+                "Error %d while trying to fetch the API" % response.status_code
+            )
             raise HTTPError
 
         return response
-    
+
     def set_cookies(self, cookies):
         """
         Sets new cookies from a string
@@ -166,19 +183,19 @@ class RequestSession:
         c.load(cookies)
         for key, m in c.items():
             self.s.cookies.set(key, m.value)
-    
+
     def get_cookies(self):
         return self.s.cookies.get_dict()
-    
+
     def set_proxy(self, proxy):
-        prot = 'http'
-        if proxy[:5].lower() == 'https':
-            prot = 'https'
+        prot = "http"
+        if proxy[:5].lower() == "https":
+            prot = "https"
         self.s.proxies = {prot: proxy}
-    
+
     def get_proxies(self):
         return self.s.proxies
-    
+
     def set_creds(self, credentials):
         self.s.auth = credentials
 

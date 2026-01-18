@@ -1,3 +1,6 @@
+# Un-ignore lib/ directory (contains source code, not packages)
+!lib/
+
 */__pycache__/*
 .venv/*
 # Snyk Security Extension - AI Rules (auto-generated)

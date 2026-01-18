@@ -11,8 +11,8 @@ information and enumerate every user, post, comment, media and more.
 This allows to get information about sensitive files or pages which may be not
 protected enough from external access.
 
-WPJsonScraper has 2 operation modes: command line arguments and interactive. 
-The latest offers a command prompt allowing to do more complex operations on 
+WPJsonScraper has 2 operation modes: command line arguments and interactive.
+The latest offers a command prompt allowing to do more complex operations on
 the WP-JSON API.
 
 ## Prerequises
@@ -27,7 +27,7 @@ environment given that the following packages are installed:
 
 Just clone the repository with git and run `pip install -r requirements.txt`.
 
-You may want to use a virtualenv for keeping your dependencies consistent across 
+You may want to use a virtualenv for keeping your dependencies consistent across
 Python projects.
 
 ## Usage
@@ -88,10 +88,10 @@ allows you to get a set of objects from the API and maybe confidential data ;)
 
 #### Search feature
 
-WordPress WP-JSON API allows to search in posts, pages, media objects, tags, 
+WordPress WP-JSON API allows to search in posts, pages, media objects, tags,
 categories, comments and users.
 
-The -S (--search) option allows to use this functionnality with 
+The -S (--search) option allows to use this functionnality with
 wp-json-scraper.
 
 It can be used on a specific item type or on several at once.

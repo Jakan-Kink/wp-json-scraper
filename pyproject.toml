@@ -1,10 +1,143 @@
 [project]
 name = "wp-json-scraper"
 version = "0.1.0"
-description = "Add your description here"
+description = "Scrapes WordPress data using the WP-JSON API"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
     "beautifulsoup4>=4.14.3",
+    "bs4>=0.0.2",
     "requests>=2.32.5",
 ]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.5.1",
+    "ruff>=0.14.13",
+]
+
+[tool.ruff]
+# Ruff configuration - replaces black, isort, and flake8
+line-length = 88
+target-version = "py314"
+
+# Enable pycodestyle (E, W), Pyflakes (F), isort (I), and McCabe complexity (C90)
+[tool.ruff.lint]
+select = [
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings
+    "F",     # Pyflakes
+    "I",     # isort
+    "C90",   # McCabe complexity
+    "N",     # pep8-naming
+    "UP",    # pyupgrade
+    "B",     # flake8-bugbear
+    "A",     # flake8-builtins
+    "COM",   # flake8-commas
+    "C4",    # flake8-comprehensions
+    "DTZ",   # flake8-datetimez
+    "ISC",   # flake8-implicit-str-concat
+    "ICN",   # flake8-import-conventions
+    "G",     # flake8-logging-format
+    "PIE",   # flake8-pie
+    "T20",   # flake8-print
+    "PT",    # flake8-pytest-style
+    "Q",     # flake8-quotes
+    "RSE",   # flake8-raise
+    "RET",   # flake8-return
+    "SIM",   # flake8-simplify
+    "TID",   # flake8-tidy-imports
+    "ARG",   # flake8-unused-arguments
+    "PTH",   # flake8-use-pathlib
+    "ERA",   # eradicate
+    "PL",    # Pylint
+    "PERF",  # Perflint
+    "RUF",   # Ruff-specific rules
+]
+
+# Ignore rules equivalent to flake8's extend-ignore
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    # Additional ignores for practical Python development
+    "COM812", # trailing comma missing (conflicts with formatter)
+    "ISC001", # implicit string concatenation (conflicts with formatter)
+    "T201",   # print found (we use print in scripts)
+    "ERA001", # commented-out code (sometimes needed)
+    "PLR0913", # too many arguments
+    "PLR0912", # too many branches
+    "PLR2004", # magic value used in comparison
+    "PLR0911", # too many return statements
+    "ARG001", # unused function argument (common in callbacks)
+    "ARG002", # unused method argument (common in abstract methods)
+    "PTH123", # pathlib open() (not always better)
+    "PTH100", # pathlib Path() for os.path.abspath (not always better)
+    "PTH104", # os.rename (not always better than pathlib)
+    "PTH108", # os.unlink (not always better than pathlib)
+    "PTH109", # os.getcwd (not always better than pathlib)
+    "PTH110", # os.path.exists (not always better than pathlib)
+    "PTH118", # os.path.join (not always better than pathlib)
+    "PTH202", # os.path.getsize (not always better than pathlib)
+    "PTH204", # os.path.getmtime (not always better than pathlib)
+    "G004",   # logging f-string (we use this extensively)
+    "PLC0415", # import outside top-level (intentional for error handling)
+    "PLW0603", # global statement (used intentionally for module state)
+    "B904",   # raise without from inside except (sometimes intentional)
+    "C901",  # McCabe complexity (we set our own threshold)
+    "PLR0915", # too many statements
+    "E722",  # bare except (legacy code pattern in this codebase)
+    # Temporary ignores to avoid complete refactor
+    "PTH102", # os.mkdir
+    "PTH103", # os.makedirs
+    "PTH107", # os.remove
+    "PTH112", # os.path.isdir
+    "PTH113", # os.path.isfile
+    "PTH119", # os.path.basename
+    "PTH120", # os.path.dirname
+    "PTH122", # os.path.splitext
+    "PTH207", # glob.glob / iglob
+    "B006",   # mutable default argument
+    "B007",   # unused loop variable
+    "B905",   # zip() without explicit strict parameter
+    "PLW2901", # for loop variable overwritten
+    "PLR1722", # use sys.exit() instead of exit()
+    "PLR1714", # consider merging multiple comparisons with 'in'
+    "UP031",  # use format specifiers instead of % format
+    "UP032",  # use f-string instead of .format()
+    "SIM102", # use single if statement instead of nested
+    "SIM105", # use contextlib.suppress
+    "SIM113", # use enumerate() for index variable
+    "SIM115", # use context manager for opening files
+    "SIM118", # use key in dict instead of key in dict.keys()
+    "PERF102", # dict.values() optimization
+    "PERF401", # list comprehension optimization
+    "N806",   # variable naming (camelCase in legacy code)
+    "N818",   # exception naming (should end with Error)
+    "A002",   # builtin shadowing
+    "ARG004", # unused static method argument
+    "DTZ007", # naive datetime without timezone
+]
+
+# McCabe complexity
+[tool.ruff.lint.mccabe]
+max-complexity = 14
+
+# Per-file ignores
+[tool.ruff.lint.per-file-ignores]
+"WPJsonScraper.py" = ["N999"]  # Invalid module name (uses CamelCase)
+"Report.py" = ["N999"]  # Invalid module name (uses CamelCase)
+"ngg_scraper.py" = []
+"inspect_ngg.py" = []
+
+# isort configuration
+[tool.ruff.lint.isort]
+known-first-party = ["lib"]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+combine-as-imports = true
+force-wrap-aliases = true
+
+# Formatter configuration (black-compatible)
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
